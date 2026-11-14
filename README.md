@@ -1,80 +1,84 @@
-## ASSURECare Raspberry Pi 4 Voice Chatbot Prototype
+# ASSURECare – Voice Assistant Prototype
+
+A voice-enabled AI assistant prototype developed as part of **ASSURECare**, an elderly cardiac monitoring solution created for the NUS–Synapxe–IMDA AI Innovation Challenge 2026.
+
+This repository contains the Raspberry Pi 4 voice chatbot prototype, which enables users to interact with an AI assistant through spoken conversations. It combines speech recognition, LLM-powered response generation and text-to-speech synthesis.
+
+## 🏆 Award – NUS–Synapxe–IMDA AI Innovation Challenge 2026
+
+**Team ASSURE won the challenge**, competing against 181 teams and more than 800 participants.
+
+![Team ASSURE award photo](docs/award_1.jpeg)
+
+## My Contribution
+
+Contributed to the overall solution design, helping shape the concept and approach behind ASSURECare. I was also involved in developing the presentation and pitch, communicating the solution's value proposition, design and potential impact to the judges.
 
 ---
 
-## 🏆 Award — NUS Synapxe IMDA AI Innovation Challenge
+## How It Works
 
-**Team ASSURE** brought home the trophy at the **NUS Synapxe IMDA AI Innovation Challenge**, competing against 181 teams and 800+ participants!
+The prototype uses a speech-to-speech pipeline:
 
-| | |
+1. **Audio Input:** `arecord` captures microphone audio.
+2. **Speech-to-Text:** ElevenLabs STT converts speech into text.
+3. **Response Generation:** OpenAI generates a conversational response.
+4. **Text-to-Speech:** ElevenLabs TTS converts the response into audio.
+5. **Audio Output:** `aplay` plays the generated response.
+
+## Interaction Modes
+
+Two runnable prototypes are included:
+
+| Script | Description |
 |---|---|
-| ![Award photo 2](docs/award_2.jpeg) | ![Award photo 1](docs/award_1.jpeg) |
-| ![Award photo 3](docs/award_3.jpeg) | |
+| `assurebot.py` | Manual turn-taking. Press Enter to record audio or enter text directly. |
+| `assure_dynamic_bot.py` | Automatic turn-taking. Detects speech, starts recording and sends the input after a period of silence. |
 
-**Team members:**
+The dynamic prototype uses voice activity detection to determine when a user has finished speaking.
 
-- [Reagan Chan](https://www.linkedin.com/in/reagan-chan/?skipRedirect=true)
-- [Aishwarya Jayaraman](https://www.linkedin.com/in/aishwarya-jayaraman-7a47a422a/)
-- [Sara Tan](https://www.linkedin.com/in/sara-tan-kwan-ling/)
-- [Sandra Lim](https://www.linkedin.com/in/sandra-lim-4b7a1622/)
-- [Udhaya Rathinavel](https://www.linkedin.com/in/udhaya-rathinavel-739689166/)
-- [Hsinning Lu](https://www.linkedin.com/in/lu-hsin-ning/)
+**Note:** The dynamic version is not a real-time streaming implementation. It uses batch ElevenLabs STT, blocking OpenAI response generation and blocking ElevenLabs TTS.
 
----
+## Tech Stack
 
-This repo is now set up for a **manual Raspberry Pi 4 test prototype**:
+| Component | Technology |
+|---|---|
+| Hardware | Raspberry Pi 4 |
+| Language | Python |
+| Speech Recognition | ElevenLabs Speech-to-Text (`scribe_v2`) |
+| Response Generation | OpenAI API (`gpt-4o-mini`) |
+| Speech Synthesis | ElevenLabs Text-to-Speech (`eleven_flash_v2_5`) |
+| Audio Input/Output | ALSA (`arecord`, `aplay`) |
+| Dependency Management | Poetry |
 
-- `arecord` captures microphone audio
-- **ElevenLabs STT** transcribes speech
-- **OpenAI (ChatGPT API)** generates the response
-- **ElevenLabs TTS** synthesizes the reply
-- `aplay` plays the spoken reply
+## Setup and Installation
 
-## There are now two runnable prototypes:
+### Prerequisites
 
-- `assurebot.py`: manual turn-taking (`Enter` to record or type text)
-- `assure_dynamic_bot.py`: always-listening prototype (auto-start on speech, auto-send on silence)
+- Raspberry Pi 4
+- Python environment
+- Microphone and speaker
+- OpenAI API key
+- ElevenLabs API key
+- ALSA audio utilities
 
-## Raspberry Pi 4 notes
-
-- Target environment: **Raspberry Pi 4**
-- Manual testing only (no automated audio tests)
-- Uses ALSA CLI tools: `arecord`, `aplay`
-
-Install ALSA tools if needed:
+Install the ALSA utilities:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y alsa-utils
 ```
 
-Check devices:
+Check available audio devices:
 
 ```bash
 arecord -l
 aplay -l
 ```
 
-## Environment variables
+### 1. Set Up the Environment
 
-Your `.env` already contains:
-
-- `ELEVENLABS_API_KEY`
-- `OPENAI_API_KEY`
-
-Optional (recommended for stable TTS voice selection):
-
-- `ELEVENLABS_VOICE_ID=<your_voice_id>`
-- `OPENAI_MODEL=gpt-4o-mini`
-- `ELEVENLABS_STT_MODEL=scribe_v2`
-- `ELEVENLABS_TTS_MODEL=eleven_flash_v2_5` (lower latency)
-- `ELEVENLABS_TTS_OUTPUT_FORMAT=pcm_16000`
-
-If `ELEVENLABS_VOICE_ID` is not set, the script will fetch your voice list and use the first available voice.
-
-## Poetry + `venv/` setup
-
-This project uses Poetry for dependency management, but you asked to use the existing `venv/`.
+This project uses Poetry for dependency management. The following setup uses an existing `venv/` environment:
 
 ```bash
 source venv/bin/activate
@@ -83,55 +87,81 @@ poetry config virtualenvs.create false
 poetry install
 ```
 
-If `poetry` is already installed globally, still run `poetry config virtualenvs.create false` while `venv/` is active so packages install into the current environment.
+### 2. Configure Environment Variables
 
-## Run the bots
+Create a `.env` file in the project root:
 
-Manual interactive voice mode (`assurebot.py`):
+```env
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+OPENAI_API_KEY=your_openai_api_key
+
+ELEVENLABS_VOICE_ID=your_voice_id
+OPENAI_MODEL=gpt-4o-mini
+ELEVENLABS_STT_MODEL=scribe_v2
+ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
+ELEVENLABS_TTS_OUTPUT_FORMAT=pcm_16000
+```
+
+`ELEVENLABS_VOICE_ID` is optional. If omitted, the script fetches the available voices and uses the first one.
+
+The model settings are also optional and can be adjusted depending on the desired voice and response latency.
+
+**Important:** Do not commit your `.env` file or API keys to GitHub.
+
+## Running the Prototypes
+
+### 1. Manual Voice Mode
 
 ```bash
 source venv/bin/activate
 python assurebot.py
 ```
 
-One-turn text-only test (good for checking APIs before mic/speaker):
+Press Enter to record audio or enter text directly.
+
+**Text-only API test:**
+
+Useful for checking API connectivity without requiring a microphone or speaker.
 
 ```bash
-source venv/bin/activate
 python assurebot.py --once --no-tts --text "Good morning, I checked my blood pressure, it is 128 over 78."
 ```
 
-One-turn voice test (records 6 seconds, then speaks reply):
+**One-turn voice test:**
+
+Records six seconds of audio and generates a spoken response.
 
 ```bash
-source venv/bin/activate
 python assurebot.py --once
 ```
 
-Use explicit ALSA devices if needed:
-
-```bash
-python assurebot.py --mic-device plughw:1,0 --speaker-device plughw:0,0
-```
-
-Always-listening mode (`assure_dynamic_bot.py`):
+### 2. Automatic Voice Mode
 
 ```bash
 source venv/bin/activate
 python assure_dynamic_bot.py
 ```
 
-With explicit ALSA devices and VAD debugging:
+The prototype automatically detects speech and sends the recording for processing after detecting silence.
+
+**Specify audio devices:**
+
+```bash
+python assurebot.py --mic-device plughw:1,0 --speaker-device plughw:0,0
+```
+
+For automatic mode with VAD debugging:
 
 ```bash
 python assure_dynamic_bot.py --mic-device plughw:1,0 --speaker-device plughw:0,0 --debug-vad
 ```
 
-Tune speech detection if needed:
+### Voice Detection Configuration
 
-- Increase `--vad-threshold` if background noise triggers recording
-- Increase `--end-silence-ms` if it cuts off too early
-- Decrease `--end-silence-ms` if replies feel delayed after you stop talking
+The automatic prototype supports parameters for adjusting speech detection:
+
+- `--vad-threshold`: Increase the threshold if background noise triggers recording.
+- `--end-silence-ms`: Increase the duration if speech is cut off too early. Decrease it if the response feels delayed after speaking.
 
 Example:
 
@@ -139,28 +169,33 @@ Example:
 python assure_dynamic_bot.py --vad-threshold 900 --end-silence-ms 700
 ```
 
-Note: `assure_dynamic_bot.py` is an auto-turn prototype, not full realtime streaming. It still uses batch ElevenLabs STT + blocking OpenAI + blocking ElevenLabs TTS, but removes the manual "press Enter to record" step.
+## Limitations and Future Improvements
 
+The current implementation is a manually tested Raspberry Pi 4 prototype.
 
-## API docs used (for this implementation and next steps)
+Potential areas for further development include:
 
-- Speech to Text API (`/v1/speech-to-text`)
-- Text to Speech API (`/v1/text-to-speech/{voice_id}`)
-- ElevenLabs models (for `scribe_v2`, `eleven_flash_v2_5`)
-- Realtime STT / WebSocket docs (for future latency work)
-- ElevenLabs docs portal and Python SDK repo for reference
-- OpenAI models docs (for `gpt-4o-mini` / GPT-5 variants)
-- OpenAI Realtime / Voice Agent docs (future path)
+- Real-time speech recognition using WebSocket streaming.
+- Lower-latency response generation and speech synthesis.
+- Improved speech detection in noisy environments.
+- More natural conversational turn-taking.
 
-Links:
+The current implementation does not include automated audio testing or real-time streaming.
 
-- https://elevenlabs.io/docs/api-reference/speech-to-text/convert
-- https://elevenlabs.io/docs/api-reference/text-to-speech/convert
-- https://elevenlabs.io/docs/overview/models
-- https://elevenlabs.io/docs/api-reference/speech-to-text/v-1-speech-to-text-realtime
-- https://elevenlabs.io/docs/websockets
-- https://github.com/elevenlabs/elevenlabs-python
-- https://developers.openai.com/api/docs/models/gpt-4o-mini
-- https://developers.openai.com/api/docs/models/gpt-5-mini
-- https://developers.openai.com/api/docs/models/gpt-5-nano
-- https://platform.openai.com/docs/guides/realtime
+## API Documentation and References
+
+**ElevenLabs**
+- [Speech-to-Text API](https://elevenlabs.io/docs/api-reference/speech-to-text/convert)
+- [Text-to-Speech API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert)
+- [Available Models](https://elevenlabs.io/docs/overview/models)
+- [Realtime Speech-to-Text](https://elevenlabs.io/docs/api-reference/speech-to-text/v-1-speech-to-text-realtime)
+- [WebSockets](https://elevenlabs.io/docs/websockets)
+- [Python SDK](https://github.com/elevenlabs/elevenlabs-python)
+
+**OpenAI**
+- [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini)
+- [GPT-5 mini](https://developers.openai.com/api/docs/models/gpt-5-mini)
+- [GPT-5 nano](https://developers.openai.com/api/docs/models/gpt-5-nano)
+- [Realtime API](https://platform.openai.com/docs/guides/realtime)
+
+---
